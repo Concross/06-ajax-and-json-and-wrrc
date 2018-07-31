@@ -1,6 +1,6 @@
 'use strict';
 
-function Article (rawDataObj) {
+function Article(rawDataObj) {
   this.author = rawDataObj.author;
   this.authorUrl = rawDataObj.authorUrl;
   this.title = rawDataObj.title;
@@ -14,10 +14,10 @@ Article.all = [];
 
 // COMMENT: Why isn't this method written as an arrow function?
 // Because we need to maintain the contextual this.
-Article.prototype.toHtml = function() {
+Article.prototype.toHtml = function () {
   let template = Handlebars.compile($('#article-template').text());
 
-  this.daysAgo = parseInt((new Date() - new Date(this.publishedOn))/60/60/24/1000);
+  this.daysAgo = parseInt((new Date() - new Date(this.publishedOn)) / 60 / 60 / 24 / 1000);
 
   // COMMENT: What is going on in the line below? What do the question mark and colon represent? How have we seen this same logic represented previously?
   // Not sure? Check the docs!
@@ -35,19 +35,24 @@ Article.prototype.toHtml = function() {
 // COMMENT: Where is this function called? What does 'rawData' represent now? How is this different from previous labs?
 // This function is called within the Article.fetchAll function. 'rawData' at this point represents the hackerIpsum.json data file. In past labs, the rawData JSON was assigned to a specific variable in a js file.
 Article.loadAll = articleData => {
-  articleData.sort((a,b) => (new Date(b.publishedOn)) - (new Date(a.publishedOn)))
+  articleData.sort((a, b) => (new Date(b.publishedOn)) - (new Date(a.publishedOn)))
 
   articleData.forEach(articleObject => Article.all.push(new Article(articleObject)))
 }
 
-// TODO: This function will retrieve the data from either a local or remote source, and process it, then hand off control to the View.
+// DONE: This function will retrieve the data from either a local or remote source, and process it, then hand off control to the View.
 Article.fetchAll = () => {
   // REVIEW: What is this 'if' statement checking for? Where was the rawData set to local storage?
   if (localStorage.rawData) {
-
-    Article.loadAll();
-
+    Article.loadAll(JSON.parse(localStorage.rawData));
+    articleView.initIndexPage();
   } else {
-
+    $.getJSON('../data/hackerIpsum.json', function () {
+    })
+      .done(function (rawData) {
+        Article.loadAll(rawData);
+        articleView.initIndexPage();
+        localStorage.rawData = JSON.stringify(rawData);
+      });
   }
 }
