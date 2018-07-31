@@ -43,16 +43,32 @@ Article.loadAll = articleData => {
 // DONE: This function will retrieve the data from either a local or remote source, and process it, then hand off control to the View.
 Article.fetchAll = () => {
   // REVIEW: What is this 'if' statement checking for? Where was the rawData set to local storage?
+  $.ajax({
+    type: "HEAD",
+    url: '../data/hackerIpsum.json',
+    complete: function (XMLHttpRequest) {
+      if (!localStorage.eTag) {
+        localStorage.eTag = JSON.stringify(XMLHttpRequest.getResponseHeader('eTag'));
+      } else {
+        if (JSON.parse(localStorage.eTag) !== XMLHttpRequest.getResponseHeader('eTag').toString()) {
+          $('article').remove();
+          Article.all = [];
+          localStorage.removeItem('rawData');
+          localStorage.eTag = JSON.stringify(XMLHttpRequest.getResponseHeader('eTag'));
+          Article.fetchAll();
+        }
+      }
+    },
+  });
+
   if (localStorage.rawData) {
     Article.loadAll(JSON.parse(localStorage.rawData));
     articleView.initIndexPage();
   } else {
-    $.getJSON('../data/hackerIpsum.json', function () {
+    $.getJSON('../data/hackerIpsum.json', function (rawData) {
+      Article.loadAll(rawData);
+      articleView.initIndexPage();
+      localStorage.rawData = JSON.stringify(rawData);
     })
-      .done(function (rawData) {
-        Article.loadAll(rawData);
-        articleView.initIndexPage();
-        localStorage.rawData = JSON.stringify(rawData);
-      });
   }
 }
